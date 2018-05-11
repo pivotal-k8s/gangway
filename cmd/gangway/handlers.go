@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"math/rand"
@@ -127,7 +128,15 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	// use the access code to retrieve a token
 	code := r.URL.Query().Get("code")
-	token, err := oauth2Cfg.Exchange(context.TODO(), code)
+
+	ctx := context.TODO()
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	unsafeClient := &http.Client{Transport: tr}
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, unsafeClient)
+
+	token, err := oauth2Cfg.Exchange(ctx, code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
