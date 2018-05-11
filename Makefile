@@ -14,7 +14,8 @@
 
 PROJECT := gangway
 # Where to push the docker image.
-REGISTRY ?= gcr.io/heptio-images
+# REGISTRY ?= gcr.io/heptio-images
+REGISTRY ?= docker.io/cflondonservices
 IMAGE := $(REGISTRY)/$(PROJECT)
 
 VERSION ?= master
