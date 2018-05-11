@@ -112,6 +112,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[cb] callback handler starting")
 
 	// verify the state string
 	state := r.URL.Query().Get("state")
@@ -121,10 +122,14 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("[cb] got session: %#v", session)
+
 	if state != session.Values["state"] {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
+
+	log.Printf("[cb] session is valid")
 
 	// use the access code to retrieve a token
 	code := r.URL.Query().Get("code")
@@ -142,6 +147,8 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("[cb] got oauth token: %#v", token)
+
 	session.Values["id_token"] = token.Extra("id_token")
 	session.Values["refresh_token"] = token.RefreshToken
 	err = session.Save(r, w)
@@ -149,7 +156,13 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[cb] session saved: %#v", session)
+	log.Printf("[cb] redirecting to /commandline")
+
 	http.Redirect(w, r, "/commandline", http.StatusSeeOther)
+
+	log.Printf("[cb] callback handler done")
 }
 
 func parseToken(idToken string) (*jwt.Token, error) {
@@ -170,6 +183,8 @@ func commandlineHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("got session: %#v", session)
+
 	idToken, ok := session.Values["id_token"].(string)
 	if !ok {
 		//http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -177,6 +192,8 @@ func commandlineHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
+
+	log.Printf("got idToken: %#v", idToken)
 
 	refreshToken, ok := session.Values["refresh_token"].(string)
 	if !ok {
@@ -186,18 +203,27 @@ func commandlineHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("got refreshToken: %#v", refreshToken)
+
 	jwtToken, err := parseToken(idToken)
 	if err != nil {
 		http.Error(w, "Could not parse JWT", http.StatusInternalServerError)
 		return
 	}
 
+	log.Printf("got jwtToken: %#v", jwtToken)
+
 	claims := jwtToken.Claims.(jwt.MapClaims)
+
+	log.Printf("got claims: %#v", claims)
+
 	username, ok := claims[cfg.UsernameClaim].(string)
 	if !ok {
 		http.Error(w, "Could not parse Username claim", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("got username: %#v", username)
 
 	email, ok := claims[cfg.EmailClaim].(string)
 	if !ok {
@@ -206,11 +232,15 @@ func commandlineHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("got email: %#v", email)
+
 	issuerURL, ok := claims["iss"].(string)
 	if !ok {
 		http.Error(w, "Could not parse Issuer URL claim", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("got issuerURL: %#v", issuerURL)
 
 	info := &userInfo{
 		ClusterName:  cfg.ClusterName,
@@ -223,5 +253,7 @@ func commandlineHandler(w http.ResponseWriter, r *http.Request) {
 		IssuerURL:    issuerURL,
 	}
 
+	log.Printf("about to serve template with %#v", info)
 	serveTemplate("commandline.tmpl", info, w)
+	log.Printf("template successfully served")
 }
