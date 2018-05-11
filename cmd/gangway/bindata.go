@@ -84,7 +84,7 @@ func templatesCommandlineTmpl() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "templates/commandline.tmpl", size: 2804, mode: os.FileMode(436), modTime: time.Unix(1523495845, 0)}
+	info := bindataFileInfo{name: "templates/commandline.tmpl", size: 2804, mode: os.FileMode(420), modTime: time.Unix(1525948100, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -104,7 +104,7 @@ func templatesHomeTmpl() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "templates/home.tmpl", size: 2088, mode: os.FileMode(436), modTime: time.Unix(1523495845, 0)}
+	info := bindataFileInfo{name: "templates/home.tmpl", size: 2088, mode: os.FileMode(420), modTime: time.Unix(1525948100, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
