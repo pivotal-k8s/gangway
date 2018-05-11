@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,10 +35,19 @@ var cfg *Config
 var oauth2Cfg *oauth2.Config
 var sessionStore *sessions.CookieStore
 
+func timeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	log.Printf("%s [%s]", name, elapsed)
+}
+
 // wrapper function for http logging
 func httpLogger(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer log.Printf("%s %s %s", r.Method, r.URL, r.RemoteAddr)
+		msg := "[req could not be dumped]"
+		if reqDump, err := httputil.DumpRequest(r, false); err == nil {
+			msg = string(reqDump)
+		}
+		defer timeTrack(time.Now(), msg)
 		fn(w, r)
 	}
 }
